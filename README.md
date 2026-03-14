@@ -40,11 +40,14 @@ sudo make install
 make start
 ```
 
+This builds a proper `.app` bundle and installs it to `/Applications/OneScreenSnap.app`.
+
 Other commands:
 
 ```bash
 make stop        # Stop OneScreenSnap
 make uninstall   # Remove everything
+make bundle      # Build .app bundle without installing
 ```
 
 > **Note:** Xcode or Command Line Tools are required. Install with `xcode-select --install` if needed.

@@ -1,9 +1,12 @@
 APP_NAME = OneScreenSnap
-INSTALL_PATH = /usr/local/bin/$(APP_NAME)
+BUNDLE_NAME = $(APP_NAME).app
+INSTALL_DIR = /Applications
+INSTALL_PATH = $(INSTALL_DIR)/$(BUNDLE_NAME)
+EXECUTABLE_PATH = $(INSTALL_PATH)/Contents/MacOS/$(APP_NAME)
 PLIST_NAME = com.onescreensnap.app.plist
 PLIST_PATH = $(HOME)/Library/LaunchAgents/$(PLIST_NAME)
 
-define PLIST_CONTENT
+define LAUNCHAGENT_PLIST
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
@@ -12,7 +15,7 @@ define PLIST_CONTENT
     <string>com.onescreensnap.app</string>
     <key>ProgramArguments</key>
     <array>
-        <string>$(INSTALL_PATH)</string>
+        <string>$(EXECUTABLE_PATH)</string>
     </array>
     <key>RunAtLoad</key>
     <true/>
@@ -22,21 +25,31 @@ define PLIST_CONTENT
 </plist>
 endef
 
-export PLIST_CONTENT
+export LAUNCHAGENT_PLIST
 
-.PHONY: build install uninstall start stop clean test
+.PHONY: build bundle install uninstall start stop clean test
 
 build:
 	swift build -c release
 
+bundle: build
+	@rm -rf $(BUNDLE_NAME)
+	@mkdir -p $(BUNDLE_NAME)/Contents/MacOS
+	@mkdir -p $(BUNDLE_NAME)/Contents/Resources
+	@cp .build/release/$(APP_NAME) $(BUNDLE_NAME)/Contents/MacOS/$(APP_NAME)
+	@cp Resources/Info.plist $(BUNDLE_NAME)/Contents/Info.plist
+	@codesign --force --sign - $(BUNDLE_NAME)
+	@echo "Created $(BUNDLE_NAME)"
+
 test:
 	swift test
 
-install: build
-	sudo cp .build/release/$(APP_NAME) $(INSTALL_PATH)
+install: bundle
+	sudo rm -rf $(INSTALL_PATH)
+	sudo cp -R $(BUNDLE_NAME) $(INSTALL_DIR)/
 	@echo "Installed to $(INSTALL_PATH)"
 	@mkdir -p $(HOME)/Library/LaunchAgents
-	@echo "$$PLIST_CONTENT" > $(PLIST_PATH)
+	@echo "$$LAUNCHAGENT_PLIST" > $(PLIST_PATH)
 	@echo "LaunchAgent installed to $(PLIST_PATH)"
 
 start:
@@ -50,10 +63,11 @@ stop:
 	@echo "$(APP_NAME) stopped"
 
 uninstall: stop
-	sudo rm -f $(INSTALL_PATH)
+	sudo rm -rf $(INSTALL_PATH)
+	sudo rm -f /usr/local/bin/$(APP_NAME)
 	rm -f $(PLIST_PATH)
 	@echo "$(APP_NAME) uninstalled"
 
 clean:
 	swift package clean
-	rm -rf .build
+	rm -rf .build $(BUNDLE_NAME)

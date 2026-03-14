@@ -8,9 +8,19 @@ public final class LaunchAtLoginManager {
         return "\(home)/Library/LaunchAgents/\(plistName)"
     }
 
-    /// Path to the currently running executable
+    /// Path to the executable inside the .app bundle, or the bare binary as fallback
     private static var executablePath: String {
-        Bundle.main.executablePath ?? ProcessInfo.processInfo.arguments[0]
+        // If running from a .app bundle, use the bundle's executable path
+        if let bundlePath = Bundle.main.executablePath,
+           bundlePath.contains(".app/Contents/MacOS/") {
+            return bundlePath
+        }
+        // Fallback: check if installed as .app in /Applications
+        let appPath = "/Applications/OneScreenSnap.app/Contents/MacOS/OneScreenSnap"
+        if FileManager.default.fileExists(atPath: appPath) {
+            return appPath
+        }
+        return Bundle.main.executablePath ?? ProcessInfo.processInfo.arguments[0]
     }
 
     public static var isEnabled: Bool {
