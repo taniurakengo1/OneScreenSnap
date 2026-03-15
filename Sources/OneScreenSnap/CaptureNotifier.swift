@@ -11,24 +11,24 @@ public enum CaptureNotifier {
         }
     }
 
-    public static func notifySuccess(mode: FeedbackMode = .soundAndFlash) {
+    public static func notifySuccess(mode: FeedbackMode = .soundAndFlash, displayID: CGDirectDisplayID? = nil) {
         NSLog("[OneScreenSnap] notifySuccess mode=\(mode.rawValue)")
         switch mode {
         case .soundAndFlash:
             playShutterSound()
-            flashScreen(color: NSColor.white.withAlphaComponent(0.3))
+            flashScreen(color: NSColor.white.withAlphaComponent(0.3), displayID: displayID)
         case .flashOnly:
-            flashScreen(color: NSColor.white.withAlphaComponent(0.3))
+            flashScreen(color: NSColor.white.withAlphaComponent(0.3), displayID: displayID)
         case .none:
             break
         }
     }
 
-    public static func notifyFailure(mode: FeedbackMode = .soundAndFlash) {
+    public static func notifyFailure(mode: FeedbackMode = .soundAndFlash, displayID: CGDirectDisplayID? = nil) {
         // Always show error alert regardless of mode
         if mode != .none {
             NSSound(named: "Basso")?.play()
-            flashScreen(color: NSColor.red.withAlphaComponent(0.2))
+            flashScreen(color: NSColor.red.withAlphaComponent(0.2), displayID: displayID)
         }
 
         let alert = NSAlert()
@@ -39,8 +39,16 @@ public enum CaptureNotifier {
         alert.runModal()
     }
 
-    private static func flashScreen(color: NSColor) {
-        guard let screen = NSScreen.main else { return }
+    /// Find the NSScreen corresponding to a CGDirectDisplayID
+    private static func screen(for displayID: CGDirectDisplayID?) -> NSScreen? {
+        guard let displayID = displayID else { return NSScreen.main }
+        return NSScreen.screens.first { screen in
+            screen.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? CGDirectDisplayID == displayID
+        } ?? NSScreen.main
+    }
+
+    private static func flashScreen(color: NSColor, displayID: CGDirectDisplayID? = nil) {
+        guard let screen = screen(for: displayID) else { return }
 
         let flashWindow = NSWindow(
             contentRect: screen.frame,

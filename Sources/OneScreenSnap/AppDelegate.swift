@@ -107,23 +107,23 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
 
     // MARK: - Capture Actions
 
-    private func processAndCopy(_ image: NSImage) {
+    private func processAndCopy(_ image: NSImage, displayID: CGDirectDisplayID) {
         var result = image
         if settingsManager.resizeMode == .aiOptimized {
             result = CaptureManager.resizeForAI(result)
         }
         ClipboardManager.copyToClipboard(result)
-        CaptureNotifier.notifySuccess(mode: settingsManager.feedbackMode)
+        CaptureNotifier.notifySuccess(mode: settingsManager.feedbackMode, displayID: displayID)
     }
 
     private func captureDisplay(_ displayID: CGDirectDisplayID) {
         Task {
             guard let image = await captureManager.captureDisplay(displayID) else {
                 NSLog("[OneScreenSnap] Failed to capture display \(displayID)")
-                await MainActor.run { CaptureNotifier.notifyFailure(mode: settingsManager.feedbackMode) }
+                await MainActor.run { CaptureNotifier.notifyFailure(mode: settingsManager.feedbackMode, displayID: displayID) }
                 return
             }
-            await MainActor.run { processAndCopy(image) }
+            await MainActor.run { processAndCopy(image, displayID: displayID) }
             NSLog("[OneScreenSnap] Captured display \(displayID) to clipboard")
         }
     }
@@ -132,10 +132,10 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
         Task {
             guard let image = await captureManager.captureRect(rect, displayID: displayID) else {
                 NSLog("[OneScreenSnap] Failed to capture rect on display \(displayID)")
-                await MainActor.run { CaptureNotifier.notifyFailure(mode: settingsManager.feedbackMode) }
+                await MainActor.run { CaptureNotifier.notifyFailure(mode: settingsManager.feedbackMode, displayID: displayID) }
                 return
             }
-            await MainActor.run { processAndCopy(image) }
+            await MainActor.run { processAndCopy(image, displayID: displayID) }
             NSLog("[OneScreenSnap] Captured rect \(rect) on display \(displayID) to clipboard")
         }
     }
