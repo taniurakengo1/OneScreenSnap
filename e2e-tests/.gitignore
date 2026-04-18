@@ -1,0 +1,8 @@
+node_modules/
+dist/
+evidence/
+bridge/clipboard-info/.build/
+bridge/ax-inspector/.build/
+bridge/bin/
+test-results/
+playwright-report/

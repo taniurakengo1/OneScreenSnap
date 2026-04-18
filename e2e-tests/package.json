@@ -1,0 +1,17 @@
+{
+  "name": "onescreensnap-e2e-tests",
+  "version": "1.0.0",
+  "private": true,
+  "description": "E2E tests for OneScreenSnap",
+  "scripts": {
+    "test": "npx playwright test",
+    "test:report": "npx playwright test --reporter=html",
+    "report": "npx playwright show-report evidence/report",
+    "build:bridge": "bash bridge/build.sh"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.52.0",
+    "@types/node": "^22.0.0",
+    "typescript": "^5.8.0"
+  }
+}
